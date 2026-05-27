@@ -1,0 +1,10 @@
+Stage,Control (gate_30) %,Treatment (gate_40) %,Difference (pp),Direction
+"Played
+(>0 rounds)",95.7,95.5,-0.2,▼ Control higher
+"Engaged
+(5+ rounds)",76.3,75.6,-0.7,▼ Control higher
+"Highly Engaged
+(30+ rounds)",37.3,36.5,-0.8,▼ Control higher
+D1 Retention,44.8,44.2,-0.6,▼ Control higher
+"D7 Retention
+(Primary Metric)",19.0,18.2,-0.8,▼ Control higher
