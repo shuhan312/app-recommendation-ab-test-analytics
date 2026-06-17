@@ -15,9 +15,9 @@
 -- 验证控制组和实验组的样本量是否均衡。
 -- -------------------------------------------------------------
 SELECT
-    version                         AS experiment_group,
-    COUNT(*)                        AS total_users,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 2) AS pct_of_total
+    version                         AS experiment_group,  -- 'gate_30' = control / 控制组, 'gate_40' = treatment / 实验组
+    COUNT(*)                        AS total_users,       -- total users assigned to this group / 该组总用户数
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 2) AS pct_of_total  -- share of all 90,189 users / 占总样本的百分比
 FROM users
 GROUP BY version
 ORDER BY version;
@@ -31,11 +31,11 @@ ORDER BY version;
 -- -------------------------------------------------------------
 SELECT
     version                                                    AS experiment_group,
-    COUNT(*)                                                   AS total_users,
-    SUM(retention_1)                                           AS retained_day1,
-    ROUND(SUM(retention_1) * 100.0 / COUNT(*), 3)             AS d1_retention_pct,
-    SUM(retention_7)                                           AS retained_day7,
-    ROUND(SUM(retention_7) * 100.0 / COUNT(*), 3)             AS d7_retention_pct
+    COUNT(*)                                                   AS total_users,        -- total users in group / 该组总用户数
+    SUM(retention_1)                                           AS retained_day1,      -- users who returned on Day 1 / 第1天回访的用户数
+    ROUND(SUM(retention_1) * 100.0 / COUNT(*), 3)             AS d1_retention_pct,   -- D1 retention rate (%) / D1 留存率（%）
+    SUM(retention_7)                                           AS retained_day7,      -- users who returned on Day 7 / 第7天回访的用户数（主指标）
+    ROUND(SUM(retention_7) * 100.0 / COUNT(*), 3)             AS d7_retention_pct    -- D7 retention rate (%) — PRIMARY METRIC / D7 留存率（%）— 主指标
 FROM users
 GROUP BY version
 ORDER BY version;
@@ -87,12 +87,20 @@ FROM (
 -- for each experiment group.
 -- 展示不同参与深度阈值下，两组 D7 留存率的差异。
 -- -------------------------------------------------------------
+-- NULLIF(..., 0) prevents division by zero if a subgroup has no users
+-- NULLIF(..., 0) 防止某子组用户数为 0 时出现除以零的错误
 SELECT
     version                                                         AS experiment_group,
+    -- D7 retention rate among users who played at least once (>0 rounds)
+    -- 至少玩过一局的用户中，第7天留存率
     ROUND(SUM(CASE WHEN sum_gamerounds >  0 THEN retention_7 ELSE 0 END) * 100.0
           / NULLIF(SUM(CASE WHEN sum_gamerounds >  0 THEN 1 ELSE 0 END), 0), 2) AS d7_played,
+    -- D7 retention rate among engaged users (5+ rounds)
+    -- 参与用户（5局以上）中，第7天留存率
     ROUND(SUM(CASE WHEN sum_gamerounds >= 5  THEN retention_7 ELSE 0 END) * 100.0
           / NULLIF(SUM(CASE WHEN sum_gamerounds >= 5  THEN 1 ELSE 0 END), 0), 2) AS d7_engaged_5plus,
+    -- D7 retention rate among highly engaged users (30+ rounds, reached gate area)
+    -- 深度参与用户（30局以上，到达关卡门槛区域）中，第7天留存率
     ROUND(SUM(CASE WHEN sum_gamerounds >= 30 THEN retention_7 ELSE 0 END) * 100.0
           / NULLIF(SUM(CASE WHEN sum_gamerounds >= 30 THEN 1 ELSE 0 END), 0), 2) AS d7_highly_engaged_30plus
 FROM users

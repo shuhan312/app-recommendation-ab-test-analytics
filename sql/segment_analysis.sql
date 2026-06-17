@@ -22,11 +22,13 @@
 -- 验证每个分群内控制组和实验组的样本量是否均衡。
 -- -------------------------------------------------------------
 SELECT
-    engagement_segment,
-    version                          AS experiment_group,
-    COUNT(*)                         AS total_users
+    engagement_segment,                -- user segment / 用户分群
+    version                          AS experiment_group,  -- 'gate_30' = control / 控制组, 'gate_40' = treatment / 实验组
+    COUNT(*)                         AS total_users        -- users in this segment × group combination / 该分群+实验组组合的用户数
 FROM users
 GROUP BY engagement_segment, version
+-- ORDER BY CASE: custom sort to display segments from lowest to highest engagement
+-- 用 CASE WHEN 自定义排序，按参与度从低到高排列分群
 ORDER BY
     CASE engagement_segment
         WHEN 'non_player' THEN 1
@@ -44,11 +46,11 @@ ORDER BY
 -- 异质性处理效应分析的核心数据表。
 -- -------------------------------------------------------------
 SELECT
-    engagement_segment,
-    version                                                     AS experiment_group,
-    COUNT(*)                                                    AS total_users,
-    SUM(retention_7)                                            AS retained_day7,
-    ROUND(SUM(retention_7) * 100.0 / COUNT(*), 3)              AS d7_retention_pct
+    engagement_segment,                                         -- user segment / 用户分群
+    version                                                     AS experiment_group,   -- control or treatment / 控制组或实验组
+    COUNT(*)                                                    AS total_users,        -- users in segment × group / 该分群+组合的用户数
+    SUM(retention_7)                                            AS retained_day7,      -- Day 7 retained users / 第7天回访用户数
+    ROUND(SUM(retention_7) * 100.0 / COUNT(*), 3)              AS d7_retention_pct    -- D7 retention rate (%) / D7 留存率（%）
 FROM users
 GROUP BY engagement_segment, version
 ORDER BY
@@ -108,10 +110,10 @@ ORDER BY
 -- 帮助判断每个分群在业务层面的重要程度。
 -- -------------------------------------------------------------
 SELECT
-    engagement_segment,
-    COUNT(*)                                                     AS segment_users,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 2)   AS pct_of_total,
-    ROUND(SUM(retention_7) * 100.0 / COUNT(*), 3)               AS overall_d7_pct
+    engagement_segment,                                          -- user segment / 用户分群
+    COUNT(*)                                                     AS segment_users,   -- total users in segment (both groups) / 该分群总用户数（两组合计）
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM users), 2)   AS pct_of_total,    -- share of all 90,189 users / 占总样本的百分比
+    ROUND(SUM(retention_7) * 100.0 / COUNT(*), 3)               AS overall_d7_pct   -- D7 retention across both groups combined / 该分群整体（两组合并）的 D7 留存率
 FROM users
 GROUP BY engagement_segment
 ORDER BY
