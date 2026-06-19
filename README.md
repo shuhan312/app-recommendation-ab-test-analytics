@@ -135,9 +135,12 @@ app-recommendation-ab-test-analytics/
 │   └── 04_segment_analysis.ipynb
 ├── sql/
 │   ├── create_tables.sql
-│   └── funnel_analysis.sql
+│   ├── funnel_analysis.sql
+│   ├── retention_analysis.sql           # D1/D7 retention rates and uplift by group
+│   └── segment_analysis.sql             # HTE analysis — D7 retention by user segment
 ├── src/
-│   └── database.py
+│   ├── database.py                      # Loads cleaned CSV into SQLite
+│   └── ab_testing.py                    # Reusable z-test, CI, and A/B test pipeline
 ├── app/
 │   └── streamlit_app.py
 ├── reports/
